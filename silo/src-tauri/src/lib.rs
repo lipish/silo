@@ -169,10 +169,106 @@ async fn get_vault_stats(
     }))
 }
 
+#[tauri::command]
+async fn read_file_content(
+    file_path: String,
+) -> Result<String, String> {
+    use std::fs;
+    
+    let path = PathBuf::from(&file_path);
+    
+    if !path.exists() {
+        return Err(format!("File not found: {}", file_path));
+    }
+    
+    if !path.is_file() {
+        return Err(format!("Path is not a file: {}", file_path));
+    }
+    
+    // 检查文件大小（限制为 10MB）
+    let metadata = fs::metadata(&path).map_err(|e| e.to_string())?;
+    if metadata.len() > 10 * 1024 * 1024 {
+        return Err("File too large (max 10MB)".to_string());
+    }
+    
+    // 读取文件内容
+    let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    
+    tracing::info!("Read file: {} ({} bytes)", file_path, content.len());
+    Ok(content)
+}
+
+#[tauri::command]
+async fn add_file_to_vault(
+    state: tauri::State<'_, AppState>,
+    file_path: String,
+) -> Result<String, String> {
+    // 读取文件内容
+    let content = read_file_content(file_path.clone()).await?;
+    
+    // 检测 MIME 类型
+    let mime_type = infer_mime_type(&file_path);
+    
+    // 添加到 Vault
+    let document = Document {
+        id: uuid::Uuid::new_v4().to_string(),
+        content,
+        metadata: vault::DocumentMetadata {
+            file_path: Some(PathBuf::from(&file_path)),
+            mime_type: Some(mime_type),
+            created_at: chrono::Utc::now(),
+            tags: vec![],
+        },
+    };
+    
+    let vault = state.vault.read().await;
+    vault.add_document(document.clone()).await.map_err(|e| e.to_string())?;
+    
+    tracing::info!("Added file to vault: {} -> {}", file_path, document.id);
+    Ok(document.id)
+}
+
+#[tauri::command]
+async fn list_vault_documents(
+    state: tauri::State<'_, AppState>,
+) -> Result<Vec<serde_json::Value>, String> {
+    let vault = state.vault.read().await;
+    let docs = vault.list_all_documents().await.map_err(|e| e.to_string())?;
+    
+    Ok(docs
+        .into_iter()
+        .map(|doc| serde_json::to_value(doc).unwrap())
+        .collect())
+}
+
+/// 根据文件扩展名推断 MIME 类型
+fn infer_mime_type(file_path: &str) -> String {
+    let ext = file_path
+        .split('.')
+        .last()
+        .unwrap_or("")
+        .to_lowercase();
+    
+    match ext.as_str() {
+        "txt" | "md" | "markdown" => "text/plain",
+        "json" => "application/json",
+        "yaml" | "yml" => "text/yaml",
+        "py" => "text/x-python",
+        "rs" => "text/x-rust",
+        "js" | "ts" | "jsx" | "tsx" => "text/javascript",
+        "html" | "htm" => "text/html",
+        "css" => "text/css",
+        "pdf" => "application/pdf",
+        _ => "application/octet-stream",
+    }
+    .to_string()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             // 初始化日志
             tracing_subscriber::fmt()
@@ -202,7 +298,10 @@ pub fn run() {
             add_document,
             search_vault,
             get_backend_type,
-            get_vault_stats
+            get_vault_stats,
+            read_file_content,
+            add_file_to_vault,
+            list_vault_documents
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

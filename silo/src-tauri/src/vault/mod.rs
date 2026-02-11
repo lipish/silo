@@ -7,9 +7,11 @@ use std::path::PathBuf;
 
 pub mod database;
 pub mod sync;
+pub mod chunker;
 
 pub use database::*;
 pub use sync::*;
+pub use chunker::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Document {
