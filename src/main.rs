@@ -1,11 +1,11 @@
 // Silo AI - GPUI 原生客户端
 
-use gpui::{
-    App, Application, Bounds, Context, SharedString, StatefulInteractiveElement, Window,
-    WindowBounds, WindowOptions, div, prelude::*, px, rgb, size,
-};
+mod ui;
+
+use gpui::{App, Application, Bounds, Context, CursorStyle, Entity, SharedString, Window, WindowBounds, WindowOptions, div, prelude::*, px, rgb, size};
 use silo_lib::{execute_agent_task, get_backend_type, get_vault_stats, AppState};
 use std::sync::Arc;
+use ui::{key_bindings, TextInput};
 
 struct Message {
     id: String,
@@ -26,7 +26,7 @@ struct Artifact {
 struct SiloApp {
     state: Option<Arc<AppState>>,
     messages: Vec<Message>,
-    input: SharedString,
+    text_input: Entity<TextInput>,
     backend_type: SharedString,
     document_count: u64,
     artifacts: Vec<Artifact>,
@@ -71,10 +71,11 @@ impl SiloApp {
                 }
             }
         });
+        let text_input = cx.new(|cx| TextInput::new(cx, "输入指令..."));
         Self {
             state,
             messages: vec![],
-            input: SharedString::from(""),
+            text_input,
             backend_type,
             document_count: 0,
             artifacts: vec![],
@@ -299,13 +300,13 @@ impl Render for SiloApp {
                                     .py_2()
                                     .text_sm()
                                     .text_color(gray_200)
-                                    .child(
-                                        if self.input.is_empty() {
-                                            SharedString::from("输入指令...")
-                                        } else {
-                                            self.input.clone()
-                                        },
-                                    ),
+                                    .id(gpui::ElementId::Name("input-area".into()))
+                                    .cursor(CursorStyle::IBeam)
+                                    .on_click(cx.listener(|this, _, window, cx| {
+                                        let handle = this.text_input.read(cx).focus_handle.clone();
+                                        window.focus(&handle);
+                                    }))
+                                    .child(self.text_input.clone()),
                             )
                             .child(
                                 div()
@@ -318,7 +319,13 @@ impl Render for SiloApp {
                                     .child("执行")
                                     .cursor_pointer()
                                     .on_click(cx.listener(move |this, _, window, cx| {
-                                        let input = this.input.clone().to_string();
+                                        let input = this
+                                            .text_input
+                                            .update(cx, |ti, cx| {
+                                                let s = ti.content().to_string();
+                                                ti.clear(cx);
+                                                s
+                                            });
                                         if input.trim().is_empty() || this.isLoading {
                                             return;
                                         }
@@ -330,7 +337,6 @@ impl Render for SiloApp {
                                             role: Role::User,
                                             content: input.clone().into(),
                                         });
-                                        this.input = SharedString::from("");
                                         this.isLoading = true;
                                         cx.notify();
 
@@ -433,6 +439,7 @@ fn main() {
         .init();
 
     Application::new().run(|cx: &mut App| {
+        cx.bind_keys(key_bindings());
         let bounds = Bounds::centered(None, size(px(1400.), px(900.)), cx);
         cx.open_window(
             WindowOptions {
