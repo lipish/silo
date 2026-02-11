@@ -1,10 +1,21 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-charcoal: #1a1a1a;
+  --color-amber: #ffbf00;
+  --color-orange: #ff6600;
+  --font-family-mono: 'Monaco', 'Menlo', monospace;
+  
+  /* 扩展 Tailwind 颜色 */
+  --color-*: initial;
+  --color-charcoal: #1a1a1a;
+  --color-amber: #ffbf00;
+  --color-orange: #ff6600;
+}
 
 :root {
-  font-family: 'Monaco', 'Menlo', monospace;
-  background-color: #1a1a1a;
+  font-family: var(--font-mono);
+  background-color: var(--color-charcoal);
   color: #e0e0e0;
 }
 
