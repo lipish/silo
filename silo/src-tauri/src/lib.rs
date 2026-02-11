@@ -61,13 +61,6 @@ impl AppState {
             sandbox: sandbox_arc,
             agent: Arc::new(RwLock::new(agent)),
         })
-        
-        Ok(Self {
-            engine: Arc::new(RwLock::new(engine)),
-            vault: Arc::new(RwLock::new(vault)),
-            sandbox: Arc::new(RwLock::new(sandbox)),
-            agent: Arc::new(RwLock::new(agent)),
-        })
     }
 }
 
@@ -87,7 +80,7 @@ async fn initialize_engine(
         top_p: 0.9,
     };
     
-    let engine = state.engine.read().await;
+    let mut engine = state.engine.write().await;
     engine
         .initialize(config)
         .await
@@ -170,15 +163,21 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            // 初始化日志
+            tracing_subscriber::fmt()
+                .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+                .init();
+            
             let app_handle = app.handle().clone();
             
-            tauri::async_runtime::block_on(async {
+            tauri::async_runtime::spawn(async move {
                 match AppState::new().await {
                     Ok(state) => {
                         app_handle.manage(state);
+                        tracing::info!("Silo AI initialized successfully");
                     }
                     Err(e) => {
-                        eprintln!("Failed to initialize app state: {}", e);
+                        tracing::error!("Failed to initialize app state: {}", e);
                     }
                 }
             });

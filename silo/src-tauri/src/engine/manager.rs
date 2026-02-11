@@ -1,6 +1,6 @@
 // 推理引擎管理器 - 根据硬件自动选择最优后端
 
-use crate::engine::backend::{InferenceBackend, LlamaCppBackend, MlxBackend, InferflowBackend};
+use crate::engine::backend::{InferenceBackend, LlamaCppBackend};
 use crate::engine::{BackendType, InferenceConfig, InferenceResponse};
 use anyhow::Result;
 use sysinfo::System;
@@ -10,13 +10,15 @@ use tokio::sync::RwLock;
 pub struct EngineManager {
     backend: Arc<RwLock<Box<dyn InferenceBackend>>>,
     current_backend_type: BackendType,
+    initialized: bool,
 }
 
 impl EngineManager {
     pub fn new() -> Self {
         Self {
-            backend: Arc::new(RwLock::new(Box::new(LlamaCppBackend {}))),
+            backend: Arc::new(RwLock::new(Box::new(LlamaCppBackend::new()))),
             current_backend_type: BackendType::LlamaCppCpu,
+            initialized: false,
         }
     }
     
@@ -58,9 +60,16 @@ impl EngineManager {
     }
     
     /// 初始化推理引擎
-    pub async fn initialize(&self, config: InferenceConfig) -> Result<()> {
+    pub async fn initialize(&mut self, config: InferenceConfig) -> Result<()> {
         let mut backend = self.backend.write().await;
-        backend.initialize(config).await
+        backend.initialize(config).await?;
+        self.initialized = true;
+        Ok(())
+    }
+    
+    /// 检查是否已初始化
+    pub fn is_initialized(&self) -> bool {
+        self.initialized
     }
     
     /// 执行推理
