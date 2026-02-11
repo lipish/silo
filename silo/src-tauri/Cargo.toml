@@ -3,22 +3,15 @@ name = "silo"
 version = "0.1.0"
 description = "Silo AI - Privacy-first local Agent OS"
 authors = ["Silo Team"]
-edition = "2021"
+edition = "2024"
 
 [lib]
 name = "silo_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
-
-[build-dependencies]
-tauri-build = { version = "2", features = [] }
+crate-type = ["rlib"]
 
 [dependencies]
-# Tauri
-tauri = { version = "2", features = [] }
-tauri-plugin-opener = "2"
-# tauri-plugin-shell = "2"  # 暂时注释
-# tauri-plugin-fs = "2"  # 暂时注释
-# tauri-plugin-dialog = "2"  # 暂时注释，等 Cargo 版本更新后再启用
+# GPUI - GPU 加速原生 UI
+gpui = "0.2.2"
 
 # Async runtime
 tokio = { version = "1", features = ["full"] }
@@ -27,18 +20,8 @@ tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
-# Vector database
-# lancedb = "0.7"  # 暂时注释，等真正需要时再启用（当前使用内存存储）
-# 注意：lancedb 依赖的 arrow 包与 chrono 0.4 有版本冲突，等真正需要时再集成
-
-# P2P networking
-# libp2p = { version = "0.53", features = ["tcp", "mdns", "noise", "yamux"] }  # 暂时注释，等真正需要时再启用
-
 # System info
-sysinfo = "0.30"  # 使用旧版本避免依赖冲突
-
-# WebAssembly runtime (sandbox)
-# wasmtime = "22"  # 暂时注释，等真正需要时再启用（当前使用模拟实现）
+sysinfo = "0.30"
 
 # Error handling
 anyhow = "1"

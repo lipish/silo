@@ -2,118 +2,34 @@
 
 **Your Data's Fortress** - 隐私优先的本地 Agent 操作系统
 
-## 项目简介
+采用 Rust GPUI 原生界面构建，替代原 Tauri + React 方案。
 
-Silo AI 是一个隐私优先的本地 Agent 操作系统，支持多端算力聚合与协作。它不仅仅是一个聊天客户端，而是一个"本地分布式推理操作系统"。
+## 构建
 
-## 核心特性
+需要 Rust nightly（GPUI 依赖 edition 2024）：
 
-### 🧠 自适应混合推理引擎
-- **Apple Silicon 优化**: 在 Mac 上使用 MLX 框架，实现 ~230 tokens/s 的高吞吐量
-- **PC/Server 优化**: 集成 Inferflow 引擎，支持 3.5-bit 量化
-- **CPU 后端**: 通用 llama.cpp 支持
+```bash
+cd src-tauri
+cargo +nightly build
+```
 
-### 🗄️ Silo Vault (数据地窖)
-- 基于 LanceDB 的向量数据库
-- 支持长上下文（100k+ tokens）
-- P2P 加密同步
+### Linux 依赖
 
-### 🤖 Agent 执行沙箱
-- 基于 Wasmtime 的安全代码执行
-- 支持 Python/JavaScript 等语言
-- 严格的权限控制
+```bash
+sudo apt install libstdc++6 libxkbcommon-dev libxkbcommon-x11-dev
+sudo apt install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
+```
 
-### 🌐 Silo Swarm (蜂群模式)
-- 局域网算力聚合
-- 分布式模型推理
-- 加密 P2P 通信
+## 运行
+
+```bash
+cd src-tauri
+cargo +nightly run
+```
 
 ## 技术栈
 
-- **后端**: Rust
-- **前端**: React + TypeScript + TailwindCSS
-- **框架**: Tauri v2
-- **向量数据库**: LanceDB
-- **P2P 网络**: libp2p
-- **沙箱**: Wasmtime
+- **界面**: Rust GPUI (GPU 加速原生 UI)
+- **后端**: 推理引擎、Vault 向量库、Agent 执行器
 
-## 开发
-
-### 前置要求
-
-- Rust (latest stable)
-- Node.js 18+
-- 系统依赖（根据平台）:
-  - Linux: webkit2gtk, rsvg2
-  - macOS: Xcode Command Line Tools
-  - Windows: Microsoft Visual C++ Build Tools
-
-### 安装依赖
-
-```bash
-cd silo
-npm install
-```
-
-### 开发模式
-
-```bash
-npm run tauri dev
-```
-
-### 构建
-
-```bash
-npm run tauri build
-```
-
-## 项目结构
-
-```
-silo/
-├── src/                    # React 前端
-│   ├── App.tsx            # 主应用组件（双栏工作台）
-│   └── App.css            # 样式（工业赛博风格）
-├── src-tauri/             # Rust 后端
-│   ├── src/
-│   │   ├── engine/        # 推理引擎管理器
-│   │   ├── vault/         # 向量数据库
-│   │   ├── swarm/         # P2P 网络
-│   │   ├── sandbox/       # 代码执行沙箱
-│   │   └── agent/         # Agent 执行器
-│   └── Cargo.toml
-└── README.md
-```
-
-## 路线图
-
-### Phase 1: Foundation (MVP) ✅
-- [x] Tauri v2 + React 骨架
-- [x] 基础 UI（双栏工作台）
-- [x] 推理引擎管理器架构
-- [x] 向量数据库集成框架
-- [ ] llama.cpp 集成
-- [ ] 基础文档问答
-
-### Phase 2: Optimization
-- [ ] MLX Sidecar 集成（Mac）
-- [ ] Inferflow 集成（PC）
-- [ ] Artifacts 预览增强
-- [ ] 长上下文支持
-
-### Phase 3: Connection (Swarm)
-- [ ] libp2p 节点发现
-- [ ] 算力卸载
-- [ ] P2P 向量库同步
-
-## 许可证
-
-MIT
-
-## 贡献
-
-欢迎贡献！请查看我们的贡献指南。
-
----
-
-**Silo** - 你的数据堡垒 🛡️
+参考：[GPUI](https://www.gpui.rs/) | [Zed GPUI](https://github.com/zed-industries/zed/blob/main/crates/gpui/README.md)

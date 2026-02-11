@@ -1,3 +1,3 @@
 fn main() {
-    tauri_build::build()
+    // GPUI 不需要特殊构建步骤
 }
