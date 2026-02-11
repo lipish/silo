@@ -20,12 +20,27 @@ function App() {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [backendType, setBackendType] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [vaultStats, setVaultStats] = useState<{ document_count: number }>({ document_count: 0 });
 
   useEffect(() => {
     // 获取后端类型
     invoke<string>("get_backend_type")
       .then((type) => setBackendType(type))
       .catch(console.error);
+    
+    // 获取 Vault 统计信息
+    invoke<{ document_count: number }>("get_vault_stats")
+      .then((stats) => setVaultStats(stats))
+      .catch(console.error);
+    
+    // 定期更新统计信息
+    const interval = setInterval(() => {
+      invoke<{ document_count: number }>("get_vault_stats")
+        .then((stats) => setVaultStats(stats))
+        .catch(console.error);
+    }, 5000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const handleSend = async (e: React.FormEvent) => {
@@ -63,7 +78,7 @@ function App() {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `错误: ${error}`,
+        content: `❌ 错误: ${error instanceof Error ? error.message : String(error)}\n\n提示：当前运行在模拟模式下。要使用真实 AI 模型，请配置模型文件。`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -78,9 +93,14 @@ function App() {
       <header className="border-b border-amber/20 px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-amber font-mono">SILO</h1>
-          <span className="text-xs text-gray-400 font-mono">
-            Backend: {backendType || "检测中..."}
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-gray-400 font-mono">
+              Backend: {backendType || "检测中..."}
+            </span>
+            <span className="text-xs text-gray-500 font-mono">
+              Vault: {vaultStats.document_count} docs
+            </span>
+          </div>
         </div>
         <div className="text-xs text-gray-500 font-mono">
           Your Data's Fortress

@@ -158,6 +158,17 @@ async fn get_backend_type(
     Ok(format!("{:?}", backend_type))
 }
 
+#[tauri::command]
+async fn get_vault_stats(
+    state: tauri::State<'_, AppState>,
+) -> Result<serde_json::Value, String> {
+    let vault = state.vault.read().await;
+    let count = vault.document_count().await;
+    Ok(serde_json::json!({
+        "document_count": count
+    }))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -190,7 +201,8 @@ pub fn run() {
             execute_agent_task,
             add_document,
             search_vault,
-            get_backend_type
+            get_backend_type,
+            get_vault_stats
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
