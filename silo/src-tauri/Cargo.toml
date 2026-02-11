@@ -16,9 +16,9 @@ tauri-build = { version = "2", features = [] }
 # Tauri
 tauri = { version = "2", features = ["macos-private-api"] }
 tauri-plugin-opener = "2"
-tauri-plugin-shell = "2"
-tauri-plugin-fs = "2"
-tauri-plugin-dialog = "2"
+# tauri-plugin-shell = "2"  # 暂时注释
+# tauri-plugin-fs = "2"  # 暂时注释
+# tauri-plugin-dialog = "2"  # 暂时注释，等 Cargo 版本更新后再启用
 
 # Async runtime
 tokio = { version = "1", features = ["full"] }
@@ -28,16 +28,17 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 # Vector database
-lancedb = "0.7"
+# lancedb = "0.7"  # 暂时注释，等真正需要时再启用（当前使用内存存储）
+# 注意：lancedb 依赖的 arrow 包与 chrono 0.4 有版本冲突，等真正需要时再集成
 
 # P2P networking
-libp2p = { version = "0.53", features = ["tcp", "mdns", "noise", "yamux"] }
+# libp2p = { version = "0.53", features = ["tcp", "mdns", "noise", "yamux"] }  # 暂时注释，等真正需要时再启用
 
 # System info
-sysinfo = "0.31"
+sysinfo = "0.30"  # 使用旧版本避免依赖冲突
 
 # WebAssembly runtime (sandbox)
-wasmtime = "22"
+# wasmtime = "22"  # 暂时注释，等真正需要时再启用（当前使用模拟实现）
 
 # Error handling
 anyhow = "1"

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/plugin-dialog";
+// import { open } from "@tauri-apps/plugin-dialog";  // 暂时注释，改用原生文件输入
 import "./App.css";
 
 interface Message {
@@ -46,6 +46,56 @@ function App() {
   }, []);
 
   const handleFileUpload = async () => {
+    // 临时方案：使用原生文件输入
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.txt,.md,.markdown,.json,.yaml,.yml,.py,.rs,.js,.ts,.jsx,.tsx,.html,.css';
+    
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      
+      try {
+        setIsUploading(true);
+        const text = await file.text();
+        
+        // 直接添加内容到 Vault
+        const docId = await invoke<string>("add_document", {
+          content: text,
+          filePath: file.name,
+        });
+        
+        // 更新统计信息
+        const stats = await invoke<{ document_count: number }>("get_vault_stats");
+        setVaultStats(stats);
+        
+        // 显示成功消息
+        const successMessage: Message = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: `✅ 文件已添加到 Vault: ${file.name}`,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, successMessage]);
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: `❌ 上传文件失败: ${error instanceof Error ? error.message : String(error)}`,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      } finally {
+        setIsUploading(false);
+      }
+    };
+    
+    input.click();
+    return;
+    
+    // 原代码（使用 dialog plugin，暂时注释）
+    /*
     try {
       const selected = await open({
         multiple: false,
@@ -88,6 +138,7 @@ function App() {
     } finally {
       setIsUploading(false);
     }
+    */
   };
 
   const handleSend = async (e: React.FormEvent) => {

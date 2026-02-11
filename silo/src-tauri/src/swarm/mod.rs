@@ -11,7 +11,7 @@ pub use discovery::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SwarmNode {
-    pub peer_id: String,
+    pub peer_id: String,  // 临时使用 String，等启用 libp2p 时可能需要调整
     pub address: String,
     pub capabilities: NodeCapabilities,
 }
