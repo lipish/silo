@@ -8,8 +8,10 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 pub mod executor;
+pub mod utils;
 
 pub use executor::*;
+pub use utils::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentTask {
