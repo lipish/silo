@@ -14,18 +14,35 @@ The package requires the Cargo feature called `edition2024`, but that feature is
 
 ### 解决方案
 
-#### 方案 1：更新 Rust/Cargo 工具链（推荐）
+**重要**：这个问题是由于 Tauri v2 的某些依赖需要更新的 Cargo 版本。必须更新 Cargo 才能解决。
+
+#### 方案 1：更新 Rust/Cargo 工具链（必需）
 
 ```bash
 # 使用 rustup 更新到最新稳定版
 rustup update stable
 
-# 或者更新到最新版本
-rustup update
-
 # 验证版本
 cargo --version
 # 应该显示 1.83.0 或更高版本
+
+# 如果还是旧版本，尝试：
+rustup self update
+rustup update stable --force
+```
+
+#### 方案 2：使用 nightly 版本（如果稳定版不可用）
+
+```bash
+# 安装 nightly 工具链
+rustup toolchain install nightly
+
+# 在项目目录中设置使用 nightly
+cd silo/src-tauri
+rustup override set nightly
+
+# 验证
+cargo --version
 ```
 
 #### 方案 2：使用 nightly 版本（临时方案）
