@@ -41,3 +41,7 @@ dirs = "5"
 # Text processing
 regex = "1"
 
+# Fix: zed-font-kit 与 core-text 21.1.0 的 core-graphics 版本冲突 (0.24 vs 0.25)
+[patch.crates-io]
+zed-font-kit = { git = "https://github.com/zed-industries/font-kit", branch = "fix/core-graphics-version" }
+
