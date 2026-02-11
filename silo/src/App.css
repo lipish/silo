@@ -1,16 +1,13 @@
 @import "tailwindcss";
 
 @theme {
+  /* 自定义颜色 */
   --color-charcoal: #1a1a1a;
   --color-amber: #ffbf00;
   --color-orange: #ff6600;
-  --font-family-mono: 'Monaco', 'Menlo', monospace;
   
-  /* 扩展 Tailwind 颜色 */
-  --color-*: initial;
-  --color-charcoal: #1a1a1a;
-  --color-amber: #ffbf00;
-  --color-orange: #ff6600;
+  /* 自定义字体 */
+  --font-family-mono: 'Monaco', 'Menlo', monospace;
 }
 
 :root {
