@@ -7,7 +7,7 @@
 需要 Rust nightly（GPUI 依赖 edition 2024）：
 
 ```bash
-cd silo/src-tauri
+cd silo
 cargo +nightly build
 ```
 
@@ -26,7 +26,7 @@ sudo apt install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
 ## 运行
 
 ```bash
-cd silo/src-tauri
+cd silo
 cargo +nightly run
 ```
 
