@@ -1,6 +1,5 @@
 // Agent 执行沙箱 - 基于 Wasmtime 的安全代码执行
 
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 pub mod executor;

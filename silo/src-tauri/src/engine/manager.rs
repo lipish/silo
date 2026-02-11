@@ -1,6 +1,6 @@
 // 推理引擎管理器 - 根据硬件自动选择最优后端
 
-use crate::engine::backend::{InferenceBackend, LlamaCppBackend};
+use crate::engine::backend::{InferenceBackend, LlamaCppBackend, MlxBackend, InferflowBackend};
 use crate::engine::{BackendType, InferenceConfig, InferenceResponse};
 use anyhow::Result;
 use sysinfo::System;
@@ -53,7 +53,7 @@ impl EngineManager {
         }
         
         // 策略 3: 默认 CPU 后端
-        *self.backend.write().await = Box::new(LlamaCppBackend {});
+        *self.backend.write().await = Box::new(LlamaCppBackend::new());
         self.current_backend_type = BackendType::LlamaCppCpu;
         tracing::info!("Selected Llama.cpp CPU backend");
         Ok(BackendType::LlamaCppCpu)

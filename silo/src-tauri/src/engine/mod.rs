@@ -1,14 +1,12 @@
 // 自适应混合推理引擎管理器
 // Adaptive Hybrid Inference Engine Manager
 
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 pub mod backend;
 pub mod manager;
 
-pub use backend::*;
 pub use manager::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

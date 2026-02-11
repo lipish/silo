@@ -151,11 +151,11 @@ impl InferenceBackend for LlamaCppBackend {
         // 创建通道用于流式输出
         let (tx, rx) = tokio::sync::mpsc::channel(100);
         
-        // 异步发送模拟的流式响应
+        // 异步发送模拟的流式响应（需要拥有字符串）
         let response_text = if prompt.contains("你好") || prompt.contains("hello") {
-            "你好！我是 Silo AI..."
+            "你好！我是 Silo AI...".to_string()
         } else {
-            &format!("处理中：{}...", prompt)
+            format!("处理中：{}...", prompt)
         };
         
         tokio::spawn(async move {

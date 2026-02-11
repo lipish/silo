@@ -1,7 +1,6 @@
 // Silo Vault - 隐私数据地窖
 // 基于 LanceDB 的向量数据库，支持长上下文和 P2P 同步
 
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -10,7 +9,6 @@ pub mod sync;
 pub mod chunker;
 
 pub use database::*;
-pub use sync::*;
 pub use chunker::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

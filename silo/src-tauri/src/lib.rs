@@ -8,7 +8,7 @@ mod vault;
 
 use agent::{AgentExecutor, AgentTask};
 use engine::{EngineManager, InferenceConfig};
-use sandbox::{ExecutionResult, SandboxConfig, SandboxExecutor};
+use sandbox::{SandboxConfig, SandboxExecutor};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -106,8 +106,8 @@ async fn execute_agent_task(
     context: Option<String>,
 ) -> Result<serde_json::Value, String> {
     let task = AgentTask { instruction, context };
-    let agent = state.agent.read().await;
-    let response = agent.execute(task).await.map_err(|e| e.to_string())?;
+    let agent: tokio::sync::RwLockReadGuard<'_, AgentExecutor> = state.agent.read().await;
+    let response = agent.execute(task).await.map_err(|e: anyhow::Error| e.to_string())?;
     Ok(serde_json::to_value(response).unwrap())
 }
 
@@ -272,6 +272,7 @@ pub fn run() {
         // .plugin(tauri_plugin_shell::init())  // 暂时注释
         // .plugin(tauri_plugin_fs::init())  // 暂时注释
         .setup(|app| {
+            use tauri::Manager;
             // 初始化日志
             tracing_subscriber::fmt()
                 .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())

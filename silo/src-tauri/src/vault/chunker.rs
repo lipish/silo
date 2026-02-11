@@ -1,7 +1,5 @@
 // 文档分块器 - 将长文档分割成适合向量化的块
 
-use anyhow::Result;
-
 pub struct DocumentChunker {
     chunk_size: usize,
     chunk_overlap: usize,

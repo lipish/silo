@@ -1,16 +1,11 @@
 // Agent 执行器 - 协调推理、检索和执行
 
-use crate::agent::executor::AgentExecutor;
-use crate::engine::EngineManager;
-use crate::sandbox::SandboxExecutor;
-use crate::vault::VaultDatabase;
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 pub mod executor;
 pub mod utils;
 
-pub use executor::*;
+pub use executor::AgentExecutor;
 pub use utils::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
