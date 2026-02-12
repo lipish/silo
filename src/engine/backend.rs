@@ -23,6 +23,7 @@ pub trait InferenceBackend: Send + Sync {
 }
 
 // MLX Sidecar 后端 (Mac 优化)
+// 暂未实现，使用模拟响应以便应用可运行
 pub struct MlxBackend {
     // MLX Python 侧车进程句柄
     // 通过 gRPC 或 Unix Domain Socket 通信
@@ -32,17 +33,38 @@ pub struct MlxBackend {
 impl InferenceBackend for MlxBackend {
     async fn initialize(&mut self, _config: InferenceConfig) -> Result<()> {
         // TODO: 启动 Python MLX 侧车进程
-        todo!()
+        Ok(())
     }
     
-    async fn infer(&self, _prompt: &str) -> Result<InferenceResponse> {
-        // TODO: 通过 IPC 调用 MLX
-        todo!()
+    async fn infer(&self, prompt: &str) -> Result<InferenceResponse> {
+        // TODO: 通过 IPC 调用 MLX，目前返回模拟响应
+        let response_text = format!(
+            "我理解你的指令：\"{}\"。\n\n（注意：当前运行在模拟模式下。MLX 后端尚未完成集成，请后续配置模型文件。）",
+            prompt
+        );
+        let tokens: Vec<String> = response_text
+            .split_whitespace()
+            .map(|s| s.to_string())
+            .collect();
+        Ok(InferenceResponse {
+            tokens,
+            finish_reason: "stop".to_string(),
+        })
     }
     
-    async fn infer_stream(&self, _prompt: &str) -> Result<tokio::sync::mpsc::Receiver<String>> {
+    async fn infer_stream(&self, prompt: &str) -> Result<tokio::sync::mpsc::Receiver<String>> {
         // TODO: 流式调用 MLX
-        todo!()
+        let (tx, rx) = tokio::sync::mpsc::channel(100);
+        let text = format!("处理中：{}...", prompt);
+        tokio::spawn(async move {
+            for word in text.split_whitespace() {
+                if tx.send(format!("{} ", word)).await.is_err() {
+                    break;
+                }
+                tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+            }
+        });
+        Ok(rx)
     }
     
     fn backend_type(&self) -> crate::engine::BackendType {
@@ -56,6 +78,7 @@ impl InferenceBackend for MlxBackend {
 }
 
 // Inferflow 后端 (PC/Server)
+// 暂未实现，使用模拟响应以便应用可运行
 pub struct InferflowBackend {
     // Inferflow C++ 库绑定
 }
@@ -64,17 +87,38 @@ pub struct InferflowBackend {
 impl InferenceBackend for InferflowBackend {
     async fn initialize(&mut self, _config: InferenceConfig) -> Result<()> {
         // TODO: 加载 Inferflow 库并初始化
-        todo!()
+        Ok(())
     }
     
-    async fn infer(&self, _prompt: &str) -> Result<InferenceResponse> {
-        // TODO: 调用 Inferflow 推理
-        todo!()
+    async fn infer(&self, prompt: &str) -> Result<InferenceResponse> {
+        // TODO: 调用 Inferflow 推理，目前返回模拟响应
+        let response_text = format!(
+            "我理解你的指令：\"{}\"。\n\n（注意：当前运行在模拟模式下。Inferflow 后端尚未完成集成。）",
+            prompt
+        );
+        let tokens: Vec<String> = response_text
+            .split_whitespace()
+            .map(|s| s.to_string())
+            .collect();
+        Ok(InferenceResponse {
+            tokens,
+            finish_reason: "stop".to_string(),
+        })
     }
     
-    async fn infer_stream(&self, _prompt: &str) -> Result<tokio::sync::mpsc::Receiver<String>> {
+    async fn infer_stream(&self, prompt: &str) -> Result<tokio::sync::mpsc::Receiver<String>> {
         // TODO: 流式调用 Inferflow
-        todo!()
+        let (tx, rx) = tokio::sync::mpsc::channel(100);
+        let text = format!("处理中：{}...", prompt);
+        tokio::spawn(async move {
+            for word in text.split_whitespace() {
+                if tx.send(format!("{} ", word)).await.is_err() {
+                    break;
+                }
+                tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+            }
+        });
+        Ok(rx)
     }
     
     fn backend_type(&self) -> crate::engine::BackendType {
@@ -121,25 +165,46 @@ impl InferenceBackend for LlamaCppBackend {
     }
     
     async fn infer(&self, prompt: &str) -> Result<InferenceResponse> {
-        if !self.initialized {
-            return Err(anyhow::anyhow!("Backend not initialized"));
-        }
-        
-        // 模拟推理响应（实际应该调用 llama.cpp）
-        // 这里返回一个简单的模拟响应，让应用可以运行
-        let response_text = if prompt.contains("你好") || prompt.contains("hello") {
-            "你好！我是 Silo AI，一个隐私优先的本地 Agent 操作系统。我可以帮助你完成各种任务，同时确保你的数据完全保留在本地。"
-        } else if prompt.contains("帮助") || prompt.contains("help") {
-            "我可以帮助你：\n1. 执行代码任务\n2. 搜索本地文档\n3. 管理文件\n4. 回答基于本地知识库的问题\n\n所有操作都在本地完成，确保数据隐私。"
+        // 模拟模式：根据用户指令返回可执行的结构化推理，便于 parse_actions 解析并真正执行
+        // 仅匹配用户指令部分（"用户指令: xxx" 之后），避免被系统提示词中的"帮助"等词误触发
+        let user_instruction = prompt
+            .split("用户指令:")
+            .nth(1)
+            .and_then(|s| s.split('\n').next())
+            .map(str::trim)
+            .unwrap_or(prompt);
+
+        let response_text: String = if user_instruction.contains("你好") || user_instruction.contains("hello") {
+            "你好！我是 Silo AI，一个隐私优先的本地 Agent 操作系统。我可以帮助你完成各种任务，同时确保你的数据完全保留在本地。".to_string()
+        } else if user_instruction.contains("介绍") || user_instruction.contains("你是谁") {
+            "你好！我是 Silo AI，一个隐私优先的本地 Agent 操作系统。我可以帮助你完成各种任务，同时确保你的数据完全保留在本地。".to_string()
+        } else if user_instruction.contains("列出") && (user_instruction.contains("目录") || user_instruction.contains("文件")) {
+            // 返回包含代码块的结构化推理，便于 parse_actions 提取并执行
+            r#"用户需要列出当前目录下的文件，我将执行以下 Python 代码完成任务：
+
+```python
+import os
+for name in os.listdir('.'):
+    print(name)
+```
+"#.to_string()
+        } else if user_instruction.contains("扫描") && user_instruction.contains("PDF") {
+            r#"用户需要扫描目录查找 PDF 文件，我将执行以下 Python 代码：
+
+```python
+import os
+import glob
+home = os.path.expanduser('~')
+for path in glob.glob(os.path.join(home, 'Downloads', '**', '*.pdf'), recursive=True):
+    print(path)
+```
+"#.to_string()
         } else {
-            &format!("我理解你的指令：\"{}\"。\n\n（注意：当前运行在模拟模式下。要使用真实的 AI 模型，请配置模型文件路径并集成 llama.cpp。）", prompt)
+            format!("我理解你的指令：\"{}\"。\n\n（注意：当前运行在模拟模式下。要使用真实的 AI 模型，请配置模型文件路径并集成 llama.cpp。）", user_instruction)
         };
         
-        // 将响应分割成 tokens（模拟）
-        let tokens: Vec<String> = response_text
-            .split_whitespace()
-            .map(|s| s.to_string())
-            .collect();
+        // 模拟 tokens：保持完整文本，避免 split_whitespace 破坏代码块换行
+        let tokens: Vec<String> = vec![response_text];
         
         Ok(InferenceResponse {
             tokens,

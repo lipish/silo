@@ -1,8 +1,8 @@
-// Wasmtime 沙箱执行器
-// 目前使用模拟实现，后续集成 Wasmtime
+// 代码执行器：使用系统解释器执行，后续可集成 Wasmtime 沙箱
 
 use crate::sandbox::{ExecutionResult, SandboxConfig};
 use anyhow::Result;
+use tokio::process::Command;
 
 pub struct SandboxExecutor {
     config: SandboxConfig,
@@ -15,39 +15,22 @@ impl SandboxExecutor {
         Ok(Self { config })
     }
     
-    /// 执行代码（Python/JavaScript 等编译为 Wasm）
-    /// 目前返回模拟结果，后续集成 Wasmtime
+    /// 执行代码：Python 使用系统 python3，其他语言暂时模拟
     pub async fn execute(&self, code: &str, language: &str) -> Result<ExecutionResult> {
-        tracing::info!("Executing {} code in sandbox ({} bytes)", language, code.len());
+        tracing::info!("Executing {} code ({} bytes)", language, code.len());
         
-        // 模拟执行结果
         let result = match language.to_lowercase().as_str() {
-            "python" => {
-                // 简单的 Python 代码模拟
-                if code.contains("print") {
-                    ExecutionResult {
-                        stdout: "模拟执行结果：代码已执行\n".to_string(),
-                        stderr: String::new(),
-                        exit_code: 0,
-                    }
-                } else {
-                    ExecutionResult {
-                        stdout: format!("模拟执行：{}\n（注意：当前为模拟模式，实际执行需要集成 Wasmtime）", code),
-                        stderr: String::new(),
-                        exit_code: 0,
-                    }
-                }
-            }
+            "python" => self.execute_python(code).await?,
             "javascript" | "js" => {
                 ExecutionResult {
-                    stdout: format!("模拟执行 JavaScript 代码\n（注意：当前为模拟模式）"),
+                    stdout: format!("JavaScript 执行尚需集成，当前为模拟模式"),
                     stderr: String::new(),
                     exit_code: 0,
                 }
             }
             _ => {
                 ExecutionResult {
-                    stdout: format!("模拟执行 {} 代码\n（注意：当前为模拟模式）", language),
+                    stdout: format!("{} 执行尚需集成", language),
                     stderr: String::new(),
                     exit_code: 0,
                 }
@@ -55,5 +38,37 @@ impl SandboxExecutor {
         };
         
         Ok(result)
+    }
+
+    async fn execute_python(&self, code: &str) -> Result<ExecutionResult> {
+        let output = Command::new("python3")
+            .arg("-c")
+            .arg(code)
+            .current_dir(std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")))
+            .output()
+            .await;
+
+        match output {
+            Ok(out) => Ok(ExecutionResult {
+                stdout: String::from_utf8_lossy(&out.stdout).to_string(),
+                stderr: String::from_utf8_lossy(&out.stderr).to_string(),
+                exit_code: out.status.code().unwrap_or(-1),
+            }),
+            Err(e) => {
+                if e.kind() == std::io::ErrorKind::NotFound {
+                    Ok(ExecutionResult {
+                        stdout: String::new(),
+                        stderr: format!("未找到 python3，请确保已安装并加入 PATH"),
+                        exit_code: 1,
+                    })
+                } else {
+                    Ok(ExecutionResult {
+                        stdout: String::new(),
+                        stderr: format!("执行失败: {}", e),
+                        exit_code: 1,
+                    })
+                }
+            }
+        }
     }
 }
